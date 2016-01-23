@@ -15,8 +15,6 @@ public Plugin myinfo = {
     url = "http://pug.champ.gg, http://tf2stadium.com"
 };
 
-ConVar serverURL;
-
 bool gameAssigned;
 bool gameLive;
 bool gameCompleted;
@@ -34,8 +32,6 @@ StringMap playerStartTimes;
 StringMap playerPlaytimes;
 
 public void OnPluginStart() {
-    serverURL = CreateConVar("pugchamp_server_url", "", "the server URL to which game info is sent", FCVAR_PROTECTED|FCVAR_DONTRECORD|FCVAR_PLUGIN);
-
     RegServerCmd("pugchamp_game_info", Command_GameInfo, "replies with current game info");
 
     RegServerCmd("pugchamp_game_reset", Command_GameReset, "resets a currently active game");
@@ -74,18 +70,6 @@ public void OnMapStart() {
         gameConfig.GetString(config, sizeof(config));
 
         ServerCommand("exec %s", config);
-
-        char url[2048];
-        serverURL.GetString(url, sizeof(url));
-        HTTPRequestHandle httpRequest = Steam_CreateHTTPRequest(HTTPMethod_GET, url);
-
-        char id[32];
-        gameID.GetString(id, sizeof(id));
-        Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "game", id);
-
-        Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "status", "setup");
-
-        Steam_SendHTTPRequest(httpRequest, HTTPRequestReturned);
     }
 }
 
@@ -242,18 +226,6 @@ public void Event_GameStart(Event event, const char[] name, bool dontBroadcast) 
                 StartPlayerTimer(i);
             }
         }
-
-        char url[2048];
-        serverURL.GetString(url, sizeof(url));
-        HTTPRequestHandle httpRequest = Steam_CreateHTTPRequest(HTTPMethod_GET, url);
-
-        char id[32];
-        gameID.GetString(id, sizeof(id));
-        Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "game", id);
-
-        Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "status", "live");
-
-        Steam_SendHTTPRequest(httpRequest, HTTPRequestReturned);
     }
 }
 
@@ -267,47 +239,6 @@ public void Event_GameOver(Event event, const char[] name, bool dontBroadcast) {
                 EndPlayerTimer(i);
             }
         }
-
-        char url[2048];
-        serverURL.GetString(url, sizeof(url));
-        HTTPRequestHandle httpRequest = Steam_CreateHTTPRequest(HTTPMethod_GET, url);
-
-        char id[32];
-        gameID.GetString(id, sizeof(id));
-        Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "game", id);
-
-        Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "status", "completed");
-
-        char score[4];
-        IntToString(GetTeamScore(2), score, sizeof(score));
-        Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "score[RED]", score);
-        IntToString(GetTeamScore(3), score, sizeof(score));
-        Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "score[BLU]", score);
-
-        if (gameStartTime != -1.0) {
-            char duration[128];
-            FloatToString(GetGameTime() - gameStartTime, duration, sizeof(duration));
-            Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "duration", duration);
-        }
-
-        StringMapSnapshot players = playerPlaytimes.Snapshot();
-        for (int i = 0; i < players.Length; i++) {
-            char steamID[32];
-            players.GetKey(i, steamID, sizeof(steamID));
-
-            float playtime;
-            if (playerPlaytimes.GetValue(steamID, playtime)) {
-                char key[64];
-                Format(key, sizeof(key), "time[%s]", steamID);
-
-                char value[128];
-                FloatToString(playtime, value, sizeof(value));
-
-                Steam_SetHTTPRequestGetOrPostParameter(httpRequest, key, value);
-            }
-        }
-
-        Steam_SendHTTPRequest(httpRequest, HTTPRequestReturned);
     }
 }
 
@@ -344,33 +275,6 @@ public Action UserMessage_SayText2(UserMsg msg_id, BfRead msg, const int[] playe
     }
 
     return Plugin_Continue;
-}
-
-public void LogUploaded(bool success, const char[] logid, const char[] logurl) {
-    char url[2048];
-    serverURL.GetString(url, sizeof(url));
-    HTTPRequestHandle httpRequest = Steam_CreateHTTPRequest(HTTPMethod_GET, url);
-
-    char id[32];
-    gameID.GetString(id, sizeof(id));
-    Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "game", id);
-
-    Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "status", "logavailable");
-
-    Steam_SetHTTPRequestGetOrPostParameter(httpRequest, "url", logurl);
-
-    Steam_SendHTTPRequest(httpRequest, HTTPRequestReturned);
-}
-
-public int HTTPRequestReturned(HTTPRequestHandle HTTPRequest, bool requestSuccessful, HTTPStatusCode statusCode) {
-    Steam_ReleaseHTTPRequest(HTTPRequest);
-
-    if (!requestSuccessful) {
-        ThrowError("HTTP request failed");
-    }
-    else if (statusCode != HTTPStatusCode_OK) {
-        ThrowError("HTTP request failed with code %i", statusCode);
-    }
 }
 
 void StartPlayerTimer(int client) {
