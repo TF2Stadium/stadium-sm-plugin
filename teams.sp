@@ -24,6 +24,7 @@ public void OnPluginStart() {
     RegServerCmd("sm_game_player_add", Command_GamePlayerAdd, "adds a player to a game");
     RegServerCmd("sm_game_player_del", Command_GamePlayerRemove, "removes a player from a game");
     RegServerCmd("sm_game_player_delall", Command_GameReset, "removes all players from game");
+    RegServerCmd("sm_game_player_list", Command_ListPlayers, "lists all configured players");
 
     allowedPlayers = new ArrayList(32);
     playerNames = new StringMap();
@@ -132,6 +133,16 @@ public Action Command_GamePlayerRemove(int args) {
                 }
             }
         }
+    }
+}
+
+public Action Command_ListPlayers(int args) {
+    int n = allowedPlayers.Length;
+
+    char clientSteamID64[32];
+    for (int i = 0; i < n; i++) {
+        allowedPlayers.GetString(i, clientSteamID64, sizeof(clientSteamID64));
+        PrintToServer("%d: %s", i, clientSteamID64);
     }
 }
 
