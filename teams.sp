@@ -21,10 +21,9 @@ StringMap playerTeams;
 StringMap playerClasses;
 
 public void OnPluginStart() {
-    RegServerCmd("pugchamp_game_reset", Command_GameReset, "resets a currently active game");
-
-    RegServerCmd("pugchamp_game_player_add", Command_GamePlayerAdd, "adds a player to a game");
-    RegServerCmd("pugchamp_game_player_remove", Command_GamePlayerRemove, "removes a player from a game");
+    RegServerCmd("sm_game_player_add", Command_GamePlayerAdd, "adds a player to a game");
+    RegServerCmd("sm_game_player_del", Command_GamePlayerRemove, "removes a player from a game");
+    RegServerCmd("sm_game_player_delall", Command_GameReset, "removes all players from game");
 
     allowedPlayers = new ArrayList(32);
     playerNames = new StringMap();
