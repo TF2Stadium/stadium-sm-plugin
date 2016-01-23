@@ -87,7 +87,11 @@ kicked whenever they attempt to join the game.
 
 ## Building
 
-TODO
+To build, simply run `make`.
+
+If you do not have a SourcePawn compiler available (`spcomp`), you can
+easily install the latest 1.7 build locally into `sourcemod/` by running
+`./download-sourcemod.sh`.
 
 ## License
 
