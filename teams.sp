@@ -170,3 +170,8 @@ public Action UserMessage_SayText2(UserMsg msg_id, BfRead msg, const int[] playe
 
     return Plugin_Continue;
 }
+
+/* Local Variables: */
+/* indent-tabs-mode: nil */
+/* c-basic-offset: 4 */
+/* End: */
