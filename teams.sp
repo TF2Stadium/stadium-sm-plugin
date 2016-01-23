@@ -8,11 +8,11 @@
 #pragma newdecls required
 
 public Plugin myinfo = {
-    name = "PugChamp Control",
-    author = "Forward Command Post",
-    description = "a plugin allowing server control by and communication with a PugChamp central server",
-    version = "0.0.0",
-    url = "http://pug.champ.gg"
+    name = "Teams Control",
+    author = "Forward Command Post, TF2Stadium",
+    description = "adds commands for configuring allowed players with specific roles",
+    version = "0.0.1",
+    url = "http://pug.champ.gg, http://tf2stadium.com"
 };
 
 ConVar serverURL;
