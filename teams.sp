@@ -35,37 +35,29 @@ public void OnPluginStart() {
     HookUserMessage(GetUserMessageId("SayText2"), UserMessage_SayText2, true);
 }
 
-public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255]) {
-    char steamID64[32];
-    Connect_GetAuthId(AuthId_SteamID64, steamID64, sizeof(steamID64));
-
-    if (allowedPlayers.FindString(steamID64) == -1) {
-        strcopy(rejectReason, sizeof(rejectReason), "You are not authorized to join this server.");
-
-        return false;
-    }
-
-    return true;
-}
-
 public void OnClientPostAdminCheck(int client) {
-    char steamID[32];
-    if (!GetClientAuthId(client, AuthId_SteamID64, steamID, sizeof(steamID))) {
+    // A 64 bit steamid as a decimal string will be at most 20 chatacters
+    char steamID64[32];
+    if (!GetClientAuthId(client, AuthId_SteamID64, steamID64, sizeof(steamID64))) {
         ThrowError("Steam ID not retrieved");
     }
 
+    if (allowedPlayers.FindString(steamID64) == -1) {
+        KickClient(client, "You are not authorized to join this server.");
+    }
+
     char name[32];
-    if (playerNames.GetString(steamID, name, sizeof(name))) {
+    if (playerNames.GetString(steamID64, name, sizeof(name))) {
         SetClientName(client, name);
     }
 
     int team;
-    if (playerTeams.GetValue(steamID, team)) {
+    if (playerTeams.GetValue(steamID64, team)) {
         ChangeClientTeam(client, team);
     }
 
     TFClassType class;
-    if (playerClasses.GetValue(steamID, class)) {
+    if (playerClasses.GetValue(steamID64, class)) {
         TF2_SetPlayerClass(client, class, _, true);
     }
 }
