@@ -1,7 +1,5 @@
 #include <sourcemod>
-#include <connect>
 #include <sdktools>
-#include <steamtools>
 #include <tf2>
 #include <tf2_stocks>
 
