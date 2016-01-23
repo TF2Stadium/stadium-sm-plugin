@@ -18,11 +18,15 @@ StringMap playerNames;
 StringMap playerTeams;
 StringMap playerClasses;
 
+ConVar whitelistCvar;
+
 public void OnPluginStart() {
     RegServerCmd("sm_game_player_add", Command_GamePlayerAdd, "adds a player to a game");
     RegServerCmd("sm_game_player_del", Command_GamePlayerRemove, "removes a player from a game");
     RegServerCmd("sm_game_player_delall", Command_GameReset, "removes all players from game");
     RegServerCmd("sm_game_player_list", Command_ListPlayers, "lists all configured players");
+
+    whitelistCvar = CreateConVar("sm_game_player_whitelist", "1", "Sets whether or not to auto-kick players not on the list", _, true, 0.0, true, 1.0);
 
     allowedPlayers = new ArrayList(32);
     playerNames = new StringMap();
@@ -41,23 +45,25 @@ public void OnClientPostAdminCheck(int client) {
     }
 
     if (allowedPlayers.FindString(steamID64) == -1) {
-        KickClient(client, "You are not authorized to join this server.");
-    }
-
-    char name[32];
-    if (playerNames.GetString(steamID64, name, sizeof(name))) {
+        if (whitelistCvar.BoolValue) {
+            KickClient(client, "You are not authorized to join this server.");
+			  }
+    } else {
+			char name[32];
+			if (playerNames.GetString(steamID64, name, sizeof(name))) {
         SetClientName(client, name);
-    }
+			}
 
-    int team;
-    if (playerTeams.GetValue(steamID64, team)) {
+			int team;
+			if (playerTeams.GetValue(steamID64, team)) {
         ChangeClientTeam(client, team);
-    }
+			}
 
-    TFClassType class;
-    if (playerClasses.GetValue(steamID64, class)) {
+			TFClassType class;
+			if (playerClasses.GetValue(steamID64, class)) {
         TF2_SetPlayerClass(client, class, _, true);
-    }
+			}
+		}
 }
 
 public Action Command_GameReset(int args) {

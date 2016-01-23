@@ -61,6 +61,15 @@ Usage: `sm_game_players_list`
 
 Prints a list of all added players to the server console.
 
+### sm_game_players_whitelist
+
+Usage: `sm_game_players_whitelist 0/1`
+
+If 0, anyone can join the game: players not configured with the other
+commands will simply not be specially handled. If 1, players not
+previously configured via `sm_game_player_add` will be automatically
+kicked whenever they attempt to join the game.
+
 ## Building
 
 TODO
