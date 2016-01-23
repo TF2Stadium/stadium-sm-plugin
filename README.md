@@ -18,16 +18,16 @@ commands.
 
 ### sm_game_player_add
 
-Usage: `sm_game_player_add steamid name team class`
+Usage: `sm_game_player_add steamid [-name ...] [-team ...] [-class ...]`
 
 Adds the player with the specified `steamid` to the game. Upon
 joining, he will be renamed to the specified `name`, and moved into
-the `team` playing as `class`; where `team` and `class` are numbers
-based on the following:
+the `team` playing as `class`.
 
-team: The player's team. 2 for RED, 3 for BLU
+team: The player's team. As either a number (2 for RED, 3 for BLU) or
+as red or blu/blue.
 
-class: The player's class, based on the following table:
+class: The player's class, by name or by its ID:
 
 | scout    | 1 |
 | soldier  | 3 |
@@ -39,7 +39,11 @@ class: The player's class, based on the following table:
 | sniper   | 2 |
 | spy      | 8 |
 
-TODO: add example usage showing steamid's format
+Examples:
+
+    sm_game_player_add 76501234567890123 -name TestName -team blu -class engineer
+    sm_game_player_add 76501234567890123 -team 3 -class 9
+    sm_game_player_add 76501234567890123 -name TestName -team blue -class 9
 
 ### sm_game_player_del
 
@@ -47,7 +51,9 @@ Usage: `sm_game_player_del steamid`
 
 Removes the player with the specified steamid from the game.
 
-TODO: add example usage showing steamid's format
+Examples:
+
+    sm_game_player_del 76501234567890123
 
 ### sm_game_player_delall
 
@@ -60,6 +66,15 @@ Removes all configured players from the game.
 Usage: `sm_game_player_list`
 
 Prints a list of all added players to the server console.
+
+Examples :
+
+    > sm_game_player_list
+    sm_game_player_list: no players in the list
+    > sm_game_player_list
+    0: 76501234567890123
+    1: 76501234567890125
+    2: 76501234567890122
 
 ### sm_game_player_whitelist
 

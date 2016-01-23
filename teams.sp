@@ -20,6 +20,22 @@ StringMap playerClasses;
 
 ConVar whitelistCvar;
 
+int TF2_GetTeam(const char[] name) {
+    if (strcmp(name, "2") == 0) {
+        return 2;
+    } else if (strcmp(name, "3") == 0) {
+        return 3;
+    } else if (strcmp(name, "red") == 0) {
+        return 2;
+    } else if (strcmp(name, "blue") == 0) {
+        return 3;
+    } else if (strcmp(name, "blu") == 0) {
+        return 3;
+    }
+
+    return -1;
+}
+
 public void OnPluginStart() {
     RegServerCmd("sm_game_player_add", Command_GamePlayerAdd, "adds a player to a game");
     RegServerCmd("sm_game_player_del", Command_GamePlayerRemove, "removes a player from a game");
@@ -88,23 +104,30 @@ public Action Command_GamePlayerAdd(int args) {
         allowedPlayers.PushString(steamID);
     }
 
-    char name[32];
-    GetCmdArg(2, name, sizeof(name));
-    playerNames.SetString(steamID, name, true);
+    // Parse optional -arg val parameter options.
+    char arg[32];
+    char val[32];
+    for (int i = 2; i+1 <= args; i += 2) {
+        GetCmdArg(i, arg, sizeof(arg));
+        GetCmdArg(i+1, val, sizeof(val));
 
-    if (args >= 3) {
-        char teamString[4];
-        int team;
-        GetCmdArg(3, teamString, sizeof(teamString));
-        team = StringToInt(teamString);
-        playerTeams.SetValue(steamID, team, true);
-
-        if (args >= 4) {
-            char classString[4];
-            int class;
-            GetCmdArg(4, classString, sizeof(classString));
-            class = StringToInt(classString);
-            playerClasses.SetValue(steamID, class, true);
+        if (strcmp("-team", arg, false) == 0) {
+            int id = TF2_GetTeam(val);
+            if (id != -1) {
+                playerTeams.SetValue(steamID, id, true);
+            }
+        } else if (strcmp("-class", arg, false) == 0) {
+            TFClassType id = TF2_GetClass(val);
+            if (id != TFClass_Unknown) {
+                playerClasses.SetValue(steamID, id, true);
+            } else {
+                int idNum = StringToInt(val);
+                if (idNum >= 1 && idNum <= 9) {
+                    playerClasses.SetValue(steamID, idNum, true);
+                }
+            }
+        } else if (strcmp("-name", arg, false) == 0) {
+            playerNames.SetString(steamID, val, true);
         }
     }
 }
@@ -134,6 +157,12 @@ public Action Command_GamePlayerRemove(int args) {
 
 public Action Command_ListPlayers(int args) {
     int n = allowedPlayers.Length;
+
+    if (n == 0) {
+        char cmdName[32];
+        GetCmdArg(0, cmdName, sizeof(cmdName));
+        PrintToServer("%s: no players in the list", cmdName);
+    }
 
     char clientSteamID64[32];
     for (int i = 0; i < n; i++) {
