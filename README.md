@@ -29,15 +29,17 @@ as red or blu/blue.
 
 class: The player's class, by name or by its ID:
 
-| scout    | 1 |
-| soldier  | 3 |
-| pyro     | 7 |
-| demoman  | 4 |
-| heavy    | 6 |
-| engineer | 9 |
-| medic    | 5 |
-| sniper   | 2 |
-| spy      | 8 |
+| Class Name | ID |
+|------------|----|
+| scout      |  1 |
+| soldier    |  3 |
+| pyro       |  7 |
+| demoman    |  4 |
+| heavy      |  6 |
+| engineer   |  9 |
+| medic      |  5 |
+| sniper     |  2 |
+| spy        |  8 |
 
 Examples:
 
