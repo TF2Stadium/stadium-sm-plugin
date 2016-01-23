@@ -16,9 +16,9 @@ This plugin's interface is designed to match the source engine's
 `logaddress` interface, with `add`, `del`, `delall`, and `list`
 commands.
 
-### sm_game_players_add
+### sm_game_player_add
 
-Usage: `sm_game_players_add steamid name team class`
+Usage: `sm_game_player_add steamid name team class`
 
 Adds the player with the specified `steamid` to the game. Upon
 joining, he will be renamed to the specified `name`, and moved into
@@ -41,29 +41,29 @@ class: The player's class, based on the following table:
 
 TODO: add example usage showing steamid's format
 
-### sm_game_players_del
+### sm_game_player_del
 
-Usage: `sm_game_players_del steamid`
+Usage: `sm_game_player_del steamid`
 
 Removes the player with the specified steamid from the game.
 
 TODO: add example usage showing steamid's format
 
-### sm_game_players_delall
+### sm_game_player_delall
 
-Usage: `sm_game_players_delall`
+Usage: `sm_game_player_delall`
 
 Removes all configured players from the game.
 
-### sm_game_players_list
+### sm_game_player_list
 
-Usage: `sm_game_players_list`
+Usage: `sm_game_player_list`
 
 Prints a list of all added players to the server console.
 
-### sm_game_players_whitelist
+### sm_game_player_whitelist
 
-Usage: `sm_game_players_whitelist 0/1`
+Usage: `sm_game_player_whitelist 0/1`
 
 If 0, anyone can join the game: players not configured with the other
 commands will simply not be specially handled. If 1, players not
