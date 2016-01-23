@@ -15,36 +15,13 @@ public Plugin myinfo = {
     url = "http://pug.champ.gg, http://tf2stadium.com"
 };
 
-bool gameAssigned;
-bool gameLive;
-bool gameCompleted;
-float gameStartTime;
-
-ConVar gameID;
-ConVar gameMap;
-ConVar gameConfig;
-
 ArrayList allowedPlayers;
 StringMap playerNames;
 StringMap playerTeams;
 StringMap playerClasses;
-StringMap playerStartTimes;
-StringMap playerPlaytimes;
 
 public void OnPluginStart() {
-    RegServerCmd("pugchamp_game_info", Command_GameInfo, "replies with current game info");
-
     RegServerCmd("pugchamp_game_reset", Command_GameReset, "resets a currently active game");
-    RegServerCmd("pugchamp_game_start", Command_GameStart, "starts a new game");
-
-    gameAssigned = false;
-    gameLive = false;
-    gameCompleted = false;
-    gameStartTime = -1.0;
-
-    gameID = CreateConVar("pugchamp_game_id", "", "the ID for the current game", FCVAR_PROTECTED|FCVAR_DONTRECORD|FCVAR_PLUGIN);
-    gameMap = CreateConVar("pugchamp_game_map", "", "the map for the current game", FCVAR_PLUGIN);
-    gameConfig = CreateConVar("pugchamp_game_config", "", "the config for the current game", FCVAR_PLUGIN);
 
     RegServerCmd("pugchamp_game_player_add", Command_GamePlayerAdd, "adds a player to a game");
     RegServerCmd("pugchamp_game_player_remove", Command_GamePlayerRemove, "removes a player from a game");
@@ -53,24 +30,9 @@ public void OnPluginStart() {
     playerNames = new StringMap();
     playerTeams = new StringMap();
     playerClasses = new StringMap();
-    playerStartTimes = new StringMap();
-    playerPlaytimes = new StringMap();
-
-    HookEvent("teamplay_restart_round", Event_GameStart, EventHookMode_PostNoCopy);
-    HookEvent("teamplay_game_over", Event_GameOver, EventHookMode_PostNoCopy);
-    HookEvent("tf_game_over", Event_GameOver, EventHookMode_PostNoCopy);
 
     HookEvent("player_changename", Event_NameChange, EventHookMode_Post);
     HookUserMessage(GetUserMessageId("SayText2"), UserMessage_SayText2, true);
-}
-
-public void OnMapStart() {
-    if (gameAssigned) {
-        char config[PLATFORM_MAX_PATH];
-        gameConfig.GetString(config, sizeof(config));
-
-        ServerCommand("exec %s", config);
-    }
 }
 
 public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255]) {
@@ -106,25 +68,6 @@ public void OnClientPostAdminCheck(int client) {
     if (playerClasses.GetValue(steamID, class)) {
         TF2_SetPlayerClass(client, class, _, true);
     }
-
-    if (gameAssigned && gameLive) {
-        StartPlayerTimer(client);
-    }
-}
-
-public void OnClientDisconnect(int client) {
-    if (gameAssigned && gameLive) {
-        EndPlayerTimer(client);
-    }
-}
-
-public Action Command_GameInfo(int args) {
-    char id[32];
-    gameID.GetString(id, sizeof(id));
-
-    ReplyToCommand(0, "%s", id);
-
-    return Plugin_Handled;
 }
 
 public Action Command_GameReset(int args) {
@@ -132,33 +75,12 @@ public Action Command_GameReset(int args) {
     playerNames.Clear();
     playerTeams.Clear();
     playerClasses.Clear();
-    playerStartTimes.Clear();
-    playerPlaytimes.Clear();
-
-    gameAssigned = false;
-    gameLive = false;
-    gameCompleted = false;
-    gameStartTime = -1.0;
-    gameID.SetString("");
-    gameMap.SetString("");
-    gameConfig.SetString("");
 
     for (int i = 1; i <= MaxClients; i++) {
         if (IsClientConnected(i) && !IsClientReplay(i) && !IsClientSourceTV(i)) {
             KickClient(i, "the server is being reset");
         }
     }
-
-    return Plugin_Handled;
-}
-
-public Action Command_GameStart(int args) {
-    gameAssigned = true;
-
-    char map[PLATFORM_MAX_PATH];
-    gameMap.GetString(map, sizeof(map));
-
-    ServerCommand("changelevel %s", map);
 
     return Plugin_Handled;
 }
@@ -189,8 +111,6 @@ public Action Command_GamePlayerAdd(int args) {
             playerClasses.SetValue(steamID, class, true);
         }
     }
-
-    playerPlaytimes.SetValue(steamID, 0.0, false);
 }
 
 public Action Command_GamePlayerRemove(int args) {
@@ -211,32 +131,6 @@ public Action Command_GamePlayerRemove(int args) {
                 if (StrEqual(steamID, clientSteamID)) {
                     KickClient(i, "you have been removed from this game");
                 }
-            }
-        }
-    }
-}
-
-public void Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
-    if (gameAssigned && !gameLive && !gameCompleted) {
-        gameLive = true;
-        gameStartTime = GetGameTime();
-
-        for (int i = 1; i <= MaxClients; i++) {
-            if (IsClientConnected(i) && IsClientAuthorized(i)) {
-                StartPlayerTimer(i);
-            }
-        }
-    }
-}
-
-public void Event_GameOver(Event event, const char[] name, bool dontBroadcast) {
-    if (gameAssigned && gameLive && !gameCompleted) {
-        gameLive = false;
-        gameCompleted = true;
-
-        for (int i = 1; i <= MaxClients; i++) {
-            if (IsClientConnected(i) && IsClientAuthorized(i)) {
-                EndPlayerTimer(i);
             }
         }
     }
@@ -275,31 +169,4 @@ public Action UserMessage_SayText2(UserMsg msg_id, BfRead msg, const int[] playe
     }
 
     return Plugin_Continue;
-}
-
-void StartPlayerTimer(int client) {
-    char steamID[32];
-    GetClientAuthId(client, AuthId_SteamID64, steamID, sizeof(steamID));
-
-    playerStartTimes.SetValue(steamID, GetGameTime(), false);
-}
-
-void EndPlayerTimer(int client) {
-    char steamID[32];
-    GetClientAuthId(client, AuthId_SteamID64, steamID, sizeof(steamID));
-
-    float startTime = -1.0;
-    if (playerStartTimes.GetValue(steamID, startTime) && startTime != -1.0) {
-        float currentPlaytime = GetGameTime() - startTime;
-
-        playerStartTimes.Remove(steamID);
-
-        float previousPlaytime;
-        if (playerPlaytimes.GetValue(steamID, previousPlaytime)) {
-            playerPlaytimes.SetValue(steamID, previousPlaytime + currentPlaytime, true);
-        }
-        else {
-            playerPlaytimes.SetValue(steamID, currentPlaytime, true);
-        }
-    }
 }
