@@ -42,7 +42,9 @@ public void OnPluginStart() {
     RegServerCmd("sm_game_player_delall", Command_GameReset, "removes all players from game");
     RegServerCmd("sm_game_player_list", Command_ListPlayers, "lists all configured players");
 
-    whitelistCvar = CreateConVar("sm_game_player_whitelist", "1", "Sets whether or not to auto-kick players not on the list", _, true, 0.0, true, 1.0);
+    // Disabled by default, so that adding the plugin to a server
+    // leaves the sever usable by default
+    whitelistCvar = CreateConVar("sm_game_player_whitelist", "0", "Sets whether or not to auto-kick players not on the list", _, true, 0.0, true, 1.0);
 
     allowedPlayers = new ArrayList(32);
     playerNames = new StringMap();
@@ -88,9 +90,11 @@ public Action Command_GameReset(int args) {
     playerTeams.Clear();
     playerClasses.Clear();
 
-    for (int i = 1; i <= MaxClients; i++) {
-        if (IsClientConnected(i) && !IsClientReplay(i) && !IsClientSourceTV(i)) {
-            KickClient(i, "the server is being reset");
+    if (whitelistCvar.BoolValue) {
+        for (int i = 1; i <= MaxClients; i++) {
+            if (IsClientConnected(i) && !IsClientReplay(i) && !IsClientSourceTV(i)) {
+                KickClient(i, "the server is being reset");
+            }
         }
     }
 
@@ -143,12 +147,14 @@ public Action Command_GamePlayerRemove(int args) {
     playerTeams.Remove(steamID);
     playerClasses.Remove(steamID);
 
-    for (int i = 1; i <= MaxClients; i++) {
-        if (IsClientConnected(i) && !IsClientReplay(i) && !IsClientSourceTV(i)) {
-            char clientSteamID[32];
-            if (GetClientAuthId(i, AuthId_SteamID64, clientSteamID, sizeof(clientSteamID))) {
-                if (StrEqual(steamID, clientSteamID)) {
-                    KickClient(i, "you have been removed from this game");
+    if (whitelistCvar.BoolValue) {
+        for (int i = 1; i <= MaxClients; i++) {
+            if (IsClientConnected(i) && !IsClientReplay(i) && !IsClientSourceTV(i)) {
+                char clientSteamID[32];
+                if (GetClientAuthId(i, AuthId_SteamID64, clientSteamID, sizeof(clientSteamID))) {
+                    if (StrEqual(steamID, clientSteamID)) {
+                        KickClient(i, "you have been removed from this game");
+                    }
                 }
             }
         }
